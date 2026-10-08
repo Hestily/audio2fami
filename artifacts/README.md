@@ -18,4 +18,5 @@ dotnet FamiStudio.dll project.txt nsf-export out.nsf -nsf-export-mode:ntsc
 | `gymnopedie_nes.ogg` | 44.1 kHz Vorbis (if present) |
 | `gymnopedie_nes.nsf` | NTSC NSF for emulators |
 | `gymnopedie_nes.txt` | FamiStudio text project (open in FamiStudio, Save As `.fms`) |
-| `ui.png` | Local web UI screenshot |
+| `ui.png` | Local web UI (idle form) |
+| `audio2fami-conversion-complete.webp` | Same UI after converting the sample to mp3 (player + download) |
