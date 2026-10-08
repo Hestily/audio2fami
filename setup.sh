@@ -25,7 +25,7 @@ echo "==> 检查 ffmpeg"
 if ! have ffmpeg; then
   if have sudo; then
     sudo apt-get update -qq
-    sudo apt-get install -y -qq ffmpeg libsndfile1
+    sudo apt-get install -y -qq ffmpeg libsndfile1 fonts-noto-cjk
   else
     echo "请先安装 ffmpeg" >&2
     exit 1

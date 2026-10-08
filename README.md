@@ -55,14 +55,14 @@ audio2fami --from-midi cleaned.mid -f wav -o out.wav
 
 ---
 
-## Web UI
+## 本地网页
 
 ```bash
 audio2fami ui --port 43187
 # 浏览器打开 http://127.0.0.1:43187
 ```
 
-上传音频 → 选格式和编曲模式 → 点「转换成 8-bit」→ 试听 / 下载。进度日志会按阶段刷出来。
+上传音频 → 下拉选择格式和编曲模式 → 点「转换成 8-bit」→ 试听 / 下载。右侧（下方）进度日志按阶段刷新。不依赖 Gradio，避免和 TensorFlow 的依赖打架。
 
 ---
 

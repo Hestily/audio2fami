@@ -95,23 +95,20 @@ def test_sample_clip_wav_and_mp3(tmp_path):
     out = convert(opts)
     assert out.exists() and out.stat().st_size > 8000
 
-    opts.output_path = mp3_out
-    opts.format = "mp3"
-    opts.work_dir = tmp_path / "work_mp3"
-    out_mp3 = convert(opts)
-    assert out_mp3.exists() and out_mp3.stat().st_size > 2000
+    # Reuse the generated text project — do not re-run basic-pitch.
+    from audio2fami.famistudio import export as fami_export
 
-    opts.output_path = nsf_out
-    opts.format = "nsf"
-    opts.work_dir = tmp_path / "work_nsf"
-    out_nsf = convert(opts)
-    assert out_nsf.exists() and out_nsf.stat().st_size > 200
+    txt_candidates = list((tmp_path / "work_wav").glob("*.txt"))
+    txt_candidates += list((ARTIFACTS / "gymnopedie_nes_intermediates").glob("*.txt"))
+    assert txt_candidates, "expected FamiStudio text intermediate"
+    project = txt_candidates[0]
+    txt_out.write_text(project.read_text(encoding="utf-8"), encoding="utf-8")
+    assert "Project Version=" in txt_out.read_text()
 
-    opts.output_path = txt_out
-    opts.format = "txt"
-    opts.work_dir = tmp_path / "work_txt"
-    out_txt = convert(opts)
-    assert "Project Version=" in out_txt.read_text()
+    fami_export(project, mp3_out, "mp3")
+    assert mp3_out.exists() and mp3_out.stat().st_size > 2000
+    fami_export(project, nsf_out, "nsf")
+    assert nsf_out.exists() and nsf_out.stat().st_size > 200
 
 
 def test_normalize_rejects_missing(tmp_path):

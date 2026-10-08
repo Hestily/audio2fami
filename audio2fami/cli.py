@@ -25,13 +25,11 @@ def build_parser() -> argparse.ArgumentParser:
         description="把任意音频转成 NES 风格 8-bit 音乐（FamiStudio 芯片渲染）。",
     )
     p.add_argument("--version", action="version", version=f"audio2fami {__version__}")
-    sub = p.add_subparsers(dest="cmd")
-
-    ui = sub.add_parser("ui", help="启动本地 Web UI")
-    ui.add_argument("--host", default="0.0.0.0")
-    ui.add_argument("--port", type=int, default=43187)
-
-    p.add_argument("input", nargs="?", help="输入音频（ffmpeg 能读的都可）或 ui")
+    p.add_argument(
+        "input",
+        nargs="?",
+        help="输入音频（ffmpeg 能读的都可）。子命令 `ui` 启动网页界面。",
+    )
     p.add_argument(
         "-f",
         "--format",
@@ -82,23 +80,18 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
-    # `audio2fami ui` and `audio2fami --port` style
     if argv and argv[0] == "ui":
         from audio2fami.ui import launch
 
-        ui_parser = build_parser()
-        args = ui_parser.parse_args(argv)
+        ui = argparse.ArgumentParser(prog="audio2fami ui", description="启动本地 Web UI")
+        ui.add_argument("--host", default="0.0.0.0")
+        ui.add_argument("--port", type=int, default=43187)
+        args = ui.parse_args(argv[1:])
         launch(host=args.host, port=args.port)
         return 0
 
     parser = build_parser()
     args = parser.parse_args(argv)
-
-    if args.input == "ui":
-        from audio2fami.ui import launch
-
-        launch()
-        return 0
 
     if args.from_midi:
         src = Path(args.from_midi)

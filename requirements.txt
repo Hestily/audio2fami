@@ -8,6 +8,8 @@ tensorflow==2.15.0
 resampy==0.4.2
 librosa==0.10.2.post1
 soundfile==0.12.1
-gradio==4.44.1
+starlette==0.41.3
+uvicorn==0.34.2
+python-multipart==0.0.20
 click==8.1.8
 pytest==8.3.5

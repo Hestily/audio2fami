@@ -18,7 +18,7 @@ Python **3.9–3.11** only (`numpy<2`, `setuptools<81`). Docker: `docker build -
 
 ```bash
 audio2fami song.mp3 -f mp3 -o out.mp3
-audio2fami ui --port 43187
+audio2fami ui --port 43187   # tiny local web UI (Starlette), not Gradio
 ```
 
 Formats verified on Linux 4.5.2: `wav`, `mp3`, `ogg`, `nsf`. `txt` / `fms` write the official text project (binary `.fms` cannot be saved from the CLI; open the text file in FamiStudio and Save As).

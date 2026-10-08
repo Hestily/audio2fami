@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      ca-certificates curl unzip ffmpeg libsndfile1 \
+      ca-certificates curl unzip ffmpeg libsndfile1 fonts-noto-cjk \
       software-properties-common \
     && add-apt-repository -y ppa:deadsnakes/ppa \
     && apt-get update \

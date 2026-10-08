@@ -107,6 +107,8 @@ def export(
     if fmt not in FAMISTUDIO_COMMAND:
         raise FamiStudioError(f"FamiStudio CLI 不能导出 {fmt}")
     dest.parent.mkdir(parents=True, exist_ok=True)
+    project_txt = project_txt.resolve()
+    dest = dest.resolve()
     command = FAMISTUDIO_COMMAND[fmt]
     extra: list[str] = ["-export-songs:0"]
     if fmt == "wav":

@@ -19,7 +19,9 @@ dependencies = [
   "resampy==0.4.2",
   "librosa==0.10.2.post1",
   "soundfile==0.12.1",
-  "gradio==4.44.1",
+  "starlette>=0.37,<0.42",
+  "uvicorn>=0.30,<0.35",
+  "python-multipart>=0.0.9",
   "click==8.1.8",
 ]
 

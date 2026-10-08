@@ -1,5 +1,6 @@
 .venv/
 venv/
+agent-tools/
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -20,6 +21,9 @@ work/
 tmp/
 uploads/
 samples/gymnopedie_full.ogg
+artifacts/work/
+artifacts/from_midi_check.*
+artifacts/*_intermediates/
 
 # OS / editor
 .DS_Store
