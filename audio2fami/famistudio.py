@@ -1,66 +1,76 @@
-"""Drive the official FamiStudio Linux build headlessly."""
+"""Drive official FamiStudio headlessly on Linux and Windows."""
 
 from __future__ import annotations
 
 import os
-import shutil
 import subprocess
 from pathlib import Path
 
 from audio2fami.config import FAMISTUDIO_COMMAND, FAMISTUDIO_VERSION
 from audio2fami.logutil import StageLog
+from audio2fami.paths import (
+    ENV_DOTNET_ROOT,
+    find_dotnet,
+    famistudio_search_dirs,
+    is_famistudio_dir,
+    is_windows,
+)
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+# Hide an extra console window when launching FamiStudio.exe from the GUI.
+_CREATE_NO_WINDOW = 0x08000000
 
 
 class FamiStudioError(RuntimeError):
     pass
 
 
-def find_dotnet() -> str:
-    env = os.environ.get("DOTNET_ROOT")
-    candidates = []
-    if env:
-        candidates.append(Path(env) / "dotnet")
-    which = shutil.which("dotnet")
-    if which:
-        candidates.append(Path(which))
-    candidates.append(Path.home() / ".dotnet" / "dotnet")
-    for c in candidates:
-        if c.is_file() and os.access(c, os.X_OK):
-            return str(c)
-    raise FamiStudioError(
-        "未找到 .NET 运行时。请安装 .NET 8.0 Runtime，"
-        "或运行 ./setup.sh（会写入 ~/.dotnet）。"
-    )
-
-
 def find_famistudio_dir(explicit: Path | None = None) -> Path:
-    candidates: list[Path] = []
-    if explicit:
-        candidates.append(explicit)
-    env = os.environ.get("AUDIO2FAMI_FAMISTUDIO")
-    if env:
-        candidates.append(Path(env))
-    candidates.extend(
-        [
-            REPO_ROOT / "third_party" / "FamiStudio",
-            Path.home() / ".local" / "share" / "audio2fami" / "FamiStudio",
-            Path("/opt/famistudio"),
-        ]
-    )
-    for c in candidates:
-        if (c / "FamiStudio.dll").is_file():
+    for c in famistudio_search_dirs(explicit):
+        if is_famistudio_dir(c):
             return c
     raise FamiStudioError(
-        "未找到 FamiStudio。请运行 ./setup.sh，"
-        f"或把 {FAMISTUDIO_VERSION} Linux 版解压到 third_party/FamiStudio。"
+        "未找到 FamiStudio。"
+        + (
+            "请运行 setup.cmd，或把 Windows 便携版解压到 third_party\\FamiStudio。"
+            if is_windows()
+            else f"请运行 ./setup.sh，或把 {FAMISTUDIO_VERSION} Linux 版解压到 third_party/FamiStudio。"
+        )
     )
 
 
 def famistudio_cmd(famistudio_dir: Path | None = None) -> list[str]:
-    dll = find_famistudio_dir(famistudio_dir) / "FamiStudio.dll"
-    return [find_dotnet(), str(dll)]
+    """argv prefix: FamiStudio.exe on Windows, `dotnet FamiStudio.dll` elsewhere."""
+    root = find_famistudio_dir(famistudio_dir)
+    exe = root / "FamiStudio.exe"
+    dll = root / "FamiStudio.dll"
+    if exe.is_file():
+        return [str(exe)]
+    if dll.is_file():
+        dotnet = find_dotnet()
+        if not dotnet:
+            raise FamiStudioError(
+                "未找到 .NET 运行时。请安装 .NET 8.0 Runtime，"
+                + (
+                    "或重新运行 setup.cmd（会写入 %USERPROFILE%\\.dotnet）。"
+                    if is_windows()
+                    else "或运行 ./setup.sh（会写入 ~/.dotnet）。"
+                )
+            )
+        return [str(dotnet), str(dll)]
+    raise FamiStudioError(f"{root} 里既没有 FamiStudio.exe 也没有 FamiStudio.dll")
+
+
+def _subprocess_kwargs() -> dict:
+    kw: dict = {
+        "check": False,
+        "capture_output": True,
+        "text": True,
+        "encoding": "utf-8",
+        "errors": "replace",
+    }
+    if is_windows():
+        kw["creationflags"] = _CREATE_NO_WINDOW
+    return kw
 
 
 def run_famistudio(
@@ -69,20 +79,21 @@ def run_famistudio(
     famistudio_dir: Path | None = None,
     log: StageLog | None = None,
 ) -> str:
-    cmd = famistudio_cmd(famistudio_dir) + args
+    root = find_famistudio_dir(famistudio_dir)
+    cmd = famistudio_cmd(root) + [str(a) for a in args]
     env = os.environ.copy()
-    # Headless export does not need a display; keep GLFW from probing wildly.
-    env.setdefault("DOTNET_ROOT", str(Path(find_dotnet()).parent))
+    env.setdefault("DOTNET_SYSTEM_GLOBALIZATION_INVARIANT", "0")
+    dotnet = find_dotnet()
+    if dotnet:
+        env.setdefault(ENV_DOTNET_ROOT, str(dotnet.parent))
     if log:
         log.info(" ".join(cmd))
     try:
         proc = subprocess.run(
             cmd,
-            check=False,
-            capture_output=True,
-            text=True,
             env=env,
-            cwd=str(find_famistudio_dir(famistudio_dir)),
+            cwd=str(root),
+            **_subprocess_kwargs(),
         )
     except OSError as exc:
         raise FamiStudioError(f"无法启动 FamiStudio: {exc}") from exc

@@ -240,8 +240,16 @@ def launch(host: str = "0.0.0.0", port: int = 43187) -> None:
     import uvicorn
 
     os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "3")
-    print(f"audio2fami UI  http://{host}:{port}", flush=True)
+    os.environ.setdefault("PYTHONUTF8", "1")
+    os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+    url = f"http://127.0.0.1:{port}" if host in {"0.0.0.0", "::"} else f"http://{host}:{port}"
+    print(f"audio2fami UI  {url}", flush=True)
     print("模式说明: " + " | ".join(f"{k}={v}" for k, v in MODE_HELP.items()), flush=True)
+    if os.environ.get("AUDIO2FAMI_OPEN_BROWSER", "").strip() in {"1", "true", "yes"}:
+        import threading
+        import webbrowser
+
+        threading.Timer(1.2, lambda: webbrowser.open(url)).start()
     uvicorn.run(build_app(), host=host, port=port, log_level="info")
 
 

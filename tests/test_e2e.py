@@ -59,7 +59,7 @@ def test_from_midi_wav_mp3_nsf_txt(tmp_path):
     nsf = convert_from_midi(mid, tmp_path / "phrase.nsf", fmt="nsf")
     assert nsf.stat().st_size > 200
     txt = convert_from_midi(mid, tmp_path / "phrase.txt", fmt="txt")
-    text = txt.read_text()
+    text = txt.read_text(encoding="utf-8")
     assert 'TempoMode="FamiTracker"' in text
     assert "Square1" in text
 

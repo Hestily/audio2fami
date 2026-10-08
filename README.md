@@ -1,6 +1,6 @@
 # audio2fami
 
-把任意音频（mp3 / wav / flac / ogg / m4a …）自动转成 **NES 风格 8-bit 音乐**。芯片渲染走 [FamiStudio](https://github.com/BleuBleu/FamiStudio)（MIT，C# / .NET）的官方 Linux 命令行；MIDI 导入在 CLI 里不可用，本工具改写 **FamiStudio 文本工程** 再导出。
+把任意音频（mp3 / wav / flac / ogg / m4a …）自动转成 **NES 风格 8-bit 音乐**。芯片渲染走 [FamiStudio](https://github.com/BleuBleu/FamiStudio)（MIT，C# / .NET）官方命令行；MIDI 导入在 CLI 里不可用，本工具改写 **FamiStudio 文本工程** 再导出。支持 **Windows 10/11 x64**（原生，不用 WSL）和 Linux。
 
 [English README](README.en.md)
 
@@ -8,7 +8,35 @@
 
 ## 一行安装
 
-需要：Linux x86_64、`ffmpeg`、Python **3.9–3.11**（TensorFlow / basic-pitch 不支持 3.12+）、网络。
+Python **3.9–3.11**（TensorFlow / basic-pitch 不支持 3.12+）、网络。Windows 不要用 WSL/Docker，直接跑下面的 `setup.cmd`。
+
+### Windows 10 / 11 x64
+
+资源管理器里**双击 `setup.cmd`**，或在 cmd / PowerShell 里：
+
+```bat
+setup.cmd
+REM 可选：setup.cmd -Stems     （额外装 Demucs，体积大）
+```
+
+PowerShell 若被执行策略拦住，**不要**直接 `.\setup.ps1`，用 `setup.cmd`（它会 `-ExecutionPolicy Bypass`）。装完后：
+
+```bat
+audio2fami.cmd samples\gymnopedie_30s.wav -f mp3 -o artifacts\out.mp3 --duration 25
+start-ui.cmd
+```
+
+安装器会：找或安装 Python 3.11（uv / winget / python.org）、建 `.venv`、按 `requirements.txt` 装依赖（`numpy<2`、`setuptools<81`）、把便携 **ffmpeg** 放到 `third_party\ffmpeg`、安装用户级 **.NET 8 运行时**（Windows 便携版 FamiStudio **不是**自包含，官方文档要求 Runtime 8.0）、下载 [FamiStudio 4.5.2 WinPortableExe](https://github.com/BleuBleu/FamiStudio/releases/tag/4.5.2) 到 `third_party\FamiStudio`。
+
+覆盖路径（CLI 与环境变量等价）：
+
+```bat
+set AUDIO2FAMI_FAMISTUDIO=C:\tools\FamiStudio
+set AUDIO2FAMI_FFMPEG=C:\tools\ffmpeg\ffmpeg.exe
+audio2fami.cmd song.mp3 -f wav --famistudio-dir C:\tools\FamiStudio --ffmpeg C:\tools\ffmpeg\ffmpeg.exe
+```
+
+### Linux x86_64
 
 ```bash
 chmod +x setup.sh
@@ -32,12 +60,29 @@ docker run --rm -v "$PWD:/data" audio2fami \
 
 ## 命令行
 
+Linux / macOS 风格（已 `source .venv/bin/activate`）：
+
 ```bash
 audio2fami song.mp3 -f mp3 -o out.mp3
 audio2fami song.wav -f wav --mode lead --duration 25
 audio2fami song.flac -f nsf --mode full --tempo 140 --grid 16 --transpose 2
 audio2fami song.m4a -f txt --keep-intermediates   # 可在 FamiStudio 里再改
 audio2fami --from-midi cleaned.mid -f wav -o out.wav
+```
+
+Windows **cmd**：
+
+```bat
+audio2fami.cmd song.mp3 -f mp3 -o out.mp3
+audio2fami.cmd "D:\音乐\曲子.wav" -f wav --mode lead --duration 25
+audio2fami.cmd song.flac -f nsf --mode full --tempo 140 --grid 16
+```
+
+Windows **PowerShell**：
+
+```powershell
+.\audio2fami.cmd song.mp3 -f mp3 -o out.mp3
+.\audio2fami.cmd .\samples\gymnopedie_30s.wav -f nsf --duration 20
 ```
 
 常用参数：
@@ -57,20 +102,31 @@ audio2fami --from-midi cleaned.mid -f wav -o out.wav
 
 ## 本地网页
 
+Linux：
+
 ```bash
 audio2fami ui --port 43187
 # 浏览器打开 http://127.0.0.1:43187
 ```
 
-上传音频 → 下拉选择格式和编曲模式 → 点「转换成 8-bit」→ 试听 / 下载。右侧（下方）进度日志按阶段刷新。不依赖 Gradio，避免和 TensorFlow 的依赖打架。
+Windows：双击 `start-ui.cmd`（会启动服务并打开浏览器）。或：
+
+```bat
+audio2fami.cmd ui --host 127.0.0.1 --port 43187
+```
+
+上传音频 → 下拉选择格式和编曲模式 → 点「转换成 8-bit」→ 试听 / 下载。不依赖 Gradio，避免和 TensorFlow 的依赖打架。
 
 ---
 
-## 输出格式（已在 Linux 上核实）
+## 输出格式
 
 FamiStudio **4.5.2** 命令行：
 
 ```
+REM Windows 便携版
+FamiStudio.exe <input> <command> <output> [-options]
+REM Linux（以及没有 exe 时）
 dotnet FamiStudio.dll <input> <command> <output> [-options]
 ```
 
@@ -102,8 +158,9 @@ FamiStudio 导出失败时，`wav` / `mp3` / `ogg` 会落到内置 2A03 回退�
    - 和声 → Pulse 2（50% 方波）
    - 低音 → Triangle
    - 鼓 → Noise（GM 打击乐映射到噪声音高）
-5. **写成 FamiStudio 文本**，调用  
-   `dotnet FamiStudio.dll project.txt wav-export out.wav`（或 `mp3-export` / `ogg-export` / `nsf-export`）。
+5. **写成 FamiStudio 文本**（UTF-8、LF 换行），调用  
+   `FamiStudio.exe project.txt wav-export out.wav`（Windows）或  
+   `dotnet FamiStudio.dll project.txt wav-export out.wav`（Linux）。
 
 ---
 
@@ -117,6 +174,20 @@ FamiStudio 导出失败时，`wav` / `mp3` / `ogg` 会落到内置 2A03 回退�
 - **basic-pitch 第一次运行会下载模型**，CPU 上二三十秒音频可能要一两分钟。
 - 已知环境坑：必须 **Python 3.9–3.11**、`numpy<2`、`setuptools<81`（resampy 还在用 `pkg_resources`）。
 
+### Windows 排障
+
+| 现象 | 处理 |
+| --- | --- |
+| `无法加载文件 setup.ps1，因为在此系统上禁止运行脚本` | 用 **`setup.cmd`**，不要直接跑 ps1 |
+| SmartScreen / 杀毒拦截 FamiStudio | 属性 → 解除锁定；`setup.ps1` 会对下载的 exe/dll 做 `Unblock-File` |
+| `未找到 ffmpeg` | 确认 `third_party\ffmpeg\ffmpeg.exe`，或设 `AUDIO2FAMI_FFMPEG` |
+| `未找到 .NET` / FamiStudio 一闪退出 | 安装 [.NET 8 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) x64，或重跑 setup.cmd |
+| `未找到 FamiStudio` | 确认 `third_party\FamiStudio\FamiStudio.exe`（或 `.dll`），或设 `AUDIO2FAMI_FAMISTUDIO` |
+| 路径太长（>260 字符） | 把仓库放到较短目录，如 `C:\src\audio2fami`；可在系统里打开「长路径」 |
+| Python 3.12+ 装上了 | 必须 3.9–3.11。setup 会优先装 3.11 |
+| 中文文件名 | CLI 用 Unicode 参数传给 ffmpeg / FamiStudio；若仍失败，先复制到英文路径 |
+| `start-ui.cmd` 没有页面 | 等终端出现 `Uvicorn running`，浏览器打开 http://127.0.0.1:43187 |
+
 ---
 
 ## 测试与样例
@@ -129,6 +200,8 @@ pytest -q
 # 完整转写（会跑 basic-pitch，较慢）：
 pytest -q -m e2e
 ```
+
+CI：`.github/workflows/ci.yml` 在 `ubuntu-latest` 跑全部非 basic-pitch 测试 + FamiStudio 导出，在 `windows-latest` 跑单测以及 `--from-midi` 的 FamiStudio e2e（跳过 basic-pitch 样例，避免 Windows runner 上 TensorFlow 过慢）。本仓库开发机是 Linux，**没有在真实 Windows 桌面上点过 setup.cmd**。
 
 生成的试听文件在 `artifacts/gymnopedie_nes.mp3`（以及 wav / nsf / txt）。
 
@@ -144,4 +217,6 @@ pytest -q -m e2e
 | [Demucs](https://github.com/adefossez/demucs) | MIT（facebookresearch/demucs 已归档，请用这个维护中的 fork） |
 | 样例录音 | CC0（Wikimedia Commons） |
 
-FamiStudio 二进制请按上游 LICENSE 使用；`setup.sh` 会下载官方 Linux AMD64 包，不进 git。
+FamiStudio 二进制请按上游 LICENSE 使用；`setup.sh` / `setup.cmd` 会下载官方包到 `third_party/`，不进 git。
+
+Windows 便携版 **需要本机 .NET 8 运行时**（与 Linux 的 `dotnet FamiStudio.dll` 相同依赖）；安装器不是自包含单文件。

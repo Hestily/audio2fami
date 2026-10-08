@@ -8,10 +8,22 @@ from audio2fami.config import ConvertOptions
 
 def test_parser_format_and_mode(tmp_path):
     p = build_parser()
-    args = p.parse_args(["song.mp3", "-f", "nsf", "--mode", "lead", "--no-stems"])
+    args = p.parse_args(
+        [
+            "song.mp3",
+            "-f",
+            "nsf",
+            "--mode",
+            "lead",
+            "--no-stems",
+            "--ffmpeg",
+            "C:\\tools\\ffmpeg.exe",
+        ]
+    )
     assert args.fmt == "nsf"
     assert args.mode == "lead"
     assert args.stems is False
+    assert args.ffmpeg is not None
 
 
 def test_rejects_unknown_format(tmp_path):

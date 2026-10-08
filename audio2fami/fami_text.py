@@ -163,5 +163,8 @@ def render_fami_text(
 
 def write_fami_text(song: ChannelSong, path: Path, **kwargs) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(render_fami_text(song, **kwargs), encoding="utf-8")
+    text = render_fami_text(song, **kwargs)
+    # Always UTF-8 LF so FamiStudio on Windows does not see CRLF as part of tokens.
+    with path.open("w", encoding="utf-8", newline="\n") as fh:
+        fh.write(text)
     return path

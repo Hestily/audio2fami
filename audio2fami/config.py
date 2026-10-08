@@ -7,10 +7,15 @@ from pathlib import Path
 from typing import Literal
 
 FAMISTUDIO_VERSION = "4.5.2"
-FAMISTUDIO_RELEASE_URL = (
+FAMISTUDIO_RELEASE_TAG = FAMISTUDIO_VERSION
+FAMISTUDIO_LINUX_ZIP = f"FamiStudio452-LinuxAMD64.zip"
+FAMISTUDIO_WINDOWS_ZIP = f"FamiStudio452-WinPortableExe.zip"
+_FAMISTUDIO_BASE = (
     "https://github.com/BleuBleu/FamiStudio/releases/download/"
-    f"{FAMISTUDIO_VERSION}/FamiStudio452-LinuxAMD64.zip"
+    f"{FAMISTUDIO_VERSION}/"
 )
+FAMISTUDIO_RELEASE_URL = _FAMISTUDIO_BASE + FAMISTUDIO_LINUX_ZIP
+FAMISTUDIO_WINDOWS_URL = _FAMISTUDIO_BASE + FAMISTUDIO_WINDOWS_ZIP
 
 OUTPUT_FORMATS = ("wav", "mp3", "ogg", "nsf", "txt", "fms")
 AUDIO_FORMATS = ("wav", "mp3", "ogg")
@@ -59,6 +64,7 @@ class ConvertOptions:
     min_note: float = DEFAULT_MIN_NOTE
     sample_rate: int = 44100
     famistudio_dir: Path | None = None
+    ffmpeg_path: Path | None = None
 
     def validate(self) -> None:
         if self.format not in OUTPUT_FORMATS:

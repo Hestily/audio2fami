@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
-# One-command local setup: Python 3.11 venv, FamiStudio 4.5.2, .NET 8, ffmpeg.
+# One-command local setup (Linux): Python 3.11 venv, FamiStudio 4.5.2, .NET 8, ffmpeg.
+# Windows: run setup.cmd instead (PowerShell installer).
 set -euo pipefail
+if [[ "$(uname -s)" == MINGW* || "$(uname -s)" == CYGWIN* || "$(uname -s)" == MSYS* ]]; then
+  echo "Windows 请运行 setup.cmd，不要用 setup.sh。" >&2
+  exit 1
+fi
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT"

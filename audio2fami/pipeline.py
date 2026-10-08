@@ -66,6 +66,7 @@ def _run(opts: ConvertOptions, work: Path, log: StageLog) -> Path:
             duration=opts.duration,
             sample_rate=22050,
             log=log,
+            ffmpeg=opts.ffmpeg_path,
         )
     except AudioError as exc:
         raise PipelineError(str(exc)) from exc

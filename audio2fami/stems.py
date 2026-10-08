@@ -43,7 +43,7 @@ def separate(
         raise StemError(
             "未安装 Demucs。请用 extras 安装：\n"
             "  uv pip install -r requirements-stems.txt\n"
-            "或重新运行 ./setup.sh --stems"
+            "或重新运行 ./setup.sh --stems / setup.cmd -Stems"
         )
     dest_dir.mkdir(parents=True, exist_ok=True)
     cmd = [
@@ -60,7 +60,12 @@ def separate(
         log.info(" ".join(cmd))
     try:
         proc = subprocess.run(
-            cmd, check=False, capture_output=True, text=True
+            cmd,
+            check=False,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
         )
     except OSError as exc:
         raise StemError(f"无法启动 Demucs: {exc}") from exc

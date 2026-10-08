@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -16,6 +17,7 @@ from audio2fami.config import (
     default_output_path,
 )
 from audio2fami.logutil import default_progress
+from audio2fami.paths import ENV_FAMISTUDIO, ENV_FFMPEG
 from audio2fami.pipeline import PipelineError, convert, convert_from_midi
 
 
@@ -74,7 +76,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--work-dir", type=Path, help="中间文件目录")
     p.add_argument("--from-midi", type=Path, help="跳过转写，直接从 MIDI 进入映射/导出")
-    p.add_argument("--famistudio-dir", type=Path, help="FamiStudio 解压目录")
+    p.add_argument(
+        "--famistudio-dir",
+        type=Path,
+        help=f"FamiStudio 解压目录（也可用环境变量 {ENV_FAMISTUDIO}）",
+    )
+    p.add_argument(
+        "--ffmpeg",
+        type=Path,
+        help=f"ffmpeg 可执行文件路径（也可用环境变量 {ENV_FFMPEG}）",
+    )
     return p
 
 
@@ -92,6 +103,11 @@ def main(argv: list[str] | None = None) -> int:
 
     parser = build_parser()
     args = parser.parse_args(argv)
+
+    if args.ffmpeg:
+        os.environ[ENV_FFMPEG] = str(Path(args.ffmpeg).resolve())
+    if args.famistudio_dir:
+        os.environ[ENV_FAMISTUDIO] = str(Path(args.famistudio_dir).resolve())
 
     if args.from_midi:
         src = Path(args.from_midi)
@@ -132,6 +148,7 @@ def main(argv: list[str] | None = None) -> int:
         keep_intermediates=args.keep_intermediates,
         work_dir=args.work_dir,
         famistudio_dir=args.famistudio_dir,
+        ffmpeg_path=args.ffmpeg,
     )
     try:
         out = convert(opts)

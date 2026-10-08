@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  linux:
+    name: Linux unit + FamiStudio e2e
+    runs-on: ubuntu-latest
+    env:
+      DOTNET_ROOT: ${{ github.workspace }}/.dotnet
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: System packages
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg libsndfile1 unzip
+      - name: FamiStudio Linux build
+        run: |
+          mkdir -p third_party
+          curl -L --fail -o /tmp/fs.zip \
+            https://github.com/BleuBleu/FamiStudio/releases/download/4.5.2/FamiStudio452-LinuxAMD64.zip
+          unzip -q -o /tmp/fs.zip -d third_party/FamiStudio
+      - name: Python deps
+        run: |
+          python -m pip install -U pip "setuptools==80.9.0" wheel
+          python -m pip install "numpy==1.26.4"
+          python -m pip install -r requirements.txt
+          python -m pip install -e .
+      - name: Tests
+        env:
+          AUDIO2FAMI_SKIP_BASICPITCH: "1"
+        run: pytest -q --tb=short
+
+  windows:
+    name: Windows unit + from-MIDI e2e
+    runs-on: windows-latest
+    env:
+      PYTHONUTF8: "1"
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: ffmpeg
+        run: choco install ffmpeg -y --no-progress
+      - name: FamiStudio Windows portable
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path third_party | Out-Null
+          $zip = Join-Path $env:TEMP "fs-win.zip"
+          Invoke-WebRequest -Uri "https://github.com/BleuBleu/FamiStudio/releases/download/4.5.2/FamiStudio452-WinPortableExe.zip" -OutFile $zip -UseBasicParsing
+          Expand-Archive -LiteralPath $zip -DestinationPath "third_party/FamiStudio" -Force
+          if (-not (Test-Path "third_party/FamiStudio/FamiStudio.exe") -and -not (Test-Path "third_party/FamiStudio/FamiStudio.dll")) {
+            $inner = Get-ChildItem "third_party/FamiStudio" -Directory | Select-Object -First 1
+            if ($inner) { Get-ChildItem $inner.FullName | Move-Item -Destination "third_party/FamiStudio" -Force }
+          }
+          Get-ChildItem "third_party/FamiStudio" -Recurse -Include *.exe,*.dll | Unblock-File -ErrorAction SilentlyContinue
+          Get-ChildItem "third_party/FamiStudio" | Select-Object -First 20 Name
+      - name: Python deps
+        run: |
+          python -m pip install -U pip "setuptools==80.9.0" wheel
+          python -m pip install "numpy==1.26.4"
+          python -m pip install -r requirements.txt
+          python -m pip install -e .
+      - name: Unit tests
+        run: pytest -q -m "not e2e" --tb=short
+      - name: From-MIDI FamiStudio e2e
+        env:
+          AUDIO2FAMI_SKIP_BASICPITCH: "1"
+        run: pytest -q tests/test_e2e.py::test_from_midi_wav_mp3_nsf_txt tests/test_fami_text.py::test_famistudio_imports_generated_text --tb=short

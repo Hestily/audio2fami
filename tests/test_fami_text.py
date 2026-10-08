@@ -40,7 +40,8 @@ def test_render_contains_required_objects():
 def test_write_fami_text(tmp_path):
     path = write_fami_text(_toy_song(), tmp_path / "song.txt")
     assert path.exists()
-    assert "Project Version=" in path.read_text()
+    assert "Project Version=" in path.read_text(encoding="utf-8")
+    assert b"\r\n" not in path.read_bytes()
 
 
 def _famistudio_or_skip():
