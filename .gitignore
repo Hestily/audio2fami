@@ -1,0 +1,27 @@
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Downloaded binaries and ML caches
+third_party/
+.basic-pitch/
+~/.keras/
+.cache/
+
+# Working directories
+work/
+tmp/
+uploads/
+samples/gymnopedie_full.ogg
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

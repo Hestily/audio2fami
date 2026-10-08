@@ -1,0 +1,13 @@
+# Pinned for Python 3.9–3.11.
+# TensorFlow 2.15 needs numpy<2; resampy still imports pkg_resources so setuptools<81.
+setuptools==80.9.0
+numpy==1.26.4
+pretty_midi==0.2.10
+basic-pitch==0.4.0
+tensorflow==2.15.0
+resampy==0.4.2
+librosa==0.10.2.post1
+soundfile==0.12.1
+gradio==4.44.1
+click==8.1.8
+pytest==8.3.5

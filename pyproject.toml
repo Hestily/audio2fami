@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=70,<81"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "audio2fami"
+version = "1.0.0"
+description = "Turn any audio file into NES-style 8-bit music via FamiStudio"
+readme = "README.md"
+requires-python = ">=3.9,<3.12"
+license = { text = "MIT" }
+authors = [{ name = "audio2fami contributors" }]
+dependencies = [
+  "numpy>=1.23,<2",
+  "setuptools>=70,<81",
+  "pretty_midi==0.2.10",
+  "basic-pitch==0.4.0",
+  "tensorflow==2.15.0",
+  "resampy==0.4.2",
+  "librosa==0.10.2.post1",
+  "soundfile==0.12.1",
+  "gradio==4.44.1",
+  "click==8.1.8",
+]
+
+[project.optional-dependencies]
+stems = [
+  "demucs==4.0.1",
+  "torch==2.2.2",
+  "torchaudio==2.2.2",
+]
+dev = [
+  "pytest==8.3.5",
+]
+
+[project.scripts]
+audio2fami = "audio2fami.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["audio2fami"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+  "e2e: end-to-end tests that call FamiStudio / basic-pitch",
+]

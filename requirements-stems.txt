@@ -1,0 +1,6 @@
+# Optional Demucs stem separation (CPU). Install after requirements.txt:
+#   uv pip install --python .venv/bin/python --extra-index-url https://download.pytorch.org/whl/cpu --index-strategy unsafe-best-match -r requirements-stems.txt
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.2.2+cpu
+torchaudio==2.2.2+cpu
+demucs==4.0.1
